@@ -1,0 +1,23 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t yosuke0517/complex -f ./frontend/Dockerfile.dev ./frontend
+
+script:
+  # 各コンテナでのテストケース追加するならここで
+  - docker run -e CI=true yosuke0517/complex yarn test
+
+after_success:
+  - docker build -t yosuke0517/multi-frontend ./frontend
+  - docker build -t yosuke0517/multi-nginx ./nginx
+  - docker build -t yosuke0517/multi-server ./server
+  - docker build -t yosuke0517/multi-worker ./worker
+  # Login to the docker cli
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # take those images and push them to docker hub
+  - docker push yosuke0517/multi-frontend
+  - docker push yosuke0517/multi-nginx
+  - docker push yosuke0517/multi-server
+  - docker push yosuke0517/multi-worker
